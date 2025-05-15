@@ -8,7 +8,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.dao.CategoryRepository;
-import com.exceptiondemo.GlobalExceptionhandler;
 import com.model.Category;
 
 @Service
@@ -54,10 +53,10 @@ public class CategoryServiceImpl implements CategoryService {
     public Page<Category> getAllCategories(Pageable pageable) {
         return categoryRepo.findAll(pageable);
     }
-
+  */
     @Override
     public List<Category> searchByName(String name) {
         return categoryRepo.findByNameContainingIgnoreCase(name);
     }
-    */
+  
 }

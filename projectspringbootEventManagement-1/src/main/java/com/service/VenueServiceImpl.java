@@ -9,8 +9,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.dao.VenueRepository;
+import com.exceptiondemo.VenueNotFoundException;
 import com.model.Venue;
-import com.exceptiondemo.GlobalExceptionhandler;
 
 @Service
 public class VenueServiceImpl implements VenueService {
@@ -41,7 +41,7 @@ public class VenueServiceImpl implements VenueService {
     @Override
     public Venue updateVenue(Long id, Venue venueDetails) {
         Venue existingVenue = venueRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Venue with ID " + id + " not found"));
+                .orElseThrow(() -> new VenueNotFoundException("Venue with ID " + id + " not found"));
 
         // Update venue details
         existingVenue.setName(venueDetails.getName());
@@ -53,19 +53,19 @@ public class VenueServiceImpl implements VenueService {
     @Override
     public void deleteVenue(Long id) {
         Venue existingVenue = venueRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Venue with ID " + id + " not found"));
+                .orElseThrow(() -> new VenueNotFoundException("Venue with ID " + id + " not found"));
 
         venueRepo.delete(existingVenue);
     }
-/*
+
     @Override
     public List<Venue> searchByName(String name) {
         return venueRepo.findByNameContainingIgnoreCase(name);
     }
-
+    
     @Override
     public List<Venue> filterByLocation(String location) {
         return venueRepo.findByLocationContainingIgnoreCase(location);
     }
-    */
+    
 }

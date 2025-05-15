@@ -16,7 +16,8 @@ public interface AttendeeService {
     Attendee updateAttendee(Long id, Attendee attendee);
     void deleteAttendee(Long id);
     
-	//Page<Attendee> searchByName(String name, Pageable pageable);
-	//Page<Attendee> searchByEmail(String email, Pageable pageable);
-	//Page<Attendee> filterByEventId(Long eventId, Pageable pageable);
+    Page<Attendee> searchByName(String name, Pageable pageable);
+	Page<Attendee> searchByEmail(String email, Pageable pageable);
+	Page<Attendee> filterByEventTitle(String title, Pageable pageable);
+	
 }

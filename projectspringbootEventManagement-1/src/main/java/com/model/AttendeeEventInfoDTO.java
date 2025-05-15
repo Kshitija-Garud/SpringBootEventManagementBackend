@@ -13,14 +13,22 @@ public class AttendeeEventInfoDTO {
 	
 	private String eventDate;
 	
-	public AttendeeEventInfoDTO(Long id, String name, String email, Long eventId, String eventTitle, String eventDate) {
-        this.id = id;
-        this.name = name;
-        this.email = email;
-        this.eventId = eventId;
-        this.eventTitle = eventTitle;
-        this.eventDate = eventDate;
-    }
+	 private byte[] eventImage;
+	 
+	 private String lastRegistrationDate;
+
+	public AttendeeEventInfoDTO(Long id, String name, String email, Long eventId, String eventTitle, String eventDate,
+			byte[] eventImage, String lastRegistrationDate) {
+		super();
+		this.id = id;
+		this.name = name;
+		this.email = email;
+		this.eventId = eventId;
+		this.eventTitle = eventTitle;
+		this.eventDate = eventDate;
+		this.eventImage = eventImage;
+		this.lastRegistrationDate = lastRegistrationDate;
+	}
 
 	public Long getId() {
 		return id;
@@ -68,6 +76,22 @@ public class AttendeeEventInfoDTO {
 
 	public void setEventDate(String eventDate) {
 		this.eventDate = eventDate;
+	}
+
+	public byte[] getEventImage() {
+		return eventImage;
+	}
+
+	public void setEventImage(byte[] eventImage) {
+		this.eventImage = eventImage;
+	}
+
+	public String getLastRegistrationDate() {
+		return lastRegistrationDate;
+	}
+
+	public void setLastRegistrationDate(String lastRegistrationDate) {
+		this.lastRegistrationDate = lastRegistrationDate;
 	}
 	
 }

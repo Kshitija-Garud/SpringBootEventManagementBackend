@@ -26,11 +26,11 @@ public interface VenueService {
 
     // Delete venue by ID
     void deleteVenue(Long id);
-/*
+
     // Search venues by name (case-insensitive)
     List<Venue> searchByName(String name);
 
     // Filter venues by location (you can add more filters)
     List<Venue> filterByLocation(String location);
-    */
+   
 }

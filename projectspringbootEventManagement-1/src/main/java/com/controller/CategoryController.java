@@ -20,21 +20,21 @@ public class CategoryController {
     @Autowired
     private CategoryService categoryService;
 
-    // Get all categories (with pagination)
+    // Get all categories (without pagination)
     @GetMapping("/getAll")
     public ResponseEntity<List<Category>> getAllCategories() {
-    	List<Category> categoryList=categoryService.getAllCategories();
-    	return ResponseEntity.ok(categoryList);
-	}
-    
+        List<Category> categoryList = categoryService.getAllCategories();
+        return ResponseEntity.ok(categoryList);
+    }
+
     // Get category by ID
     @GetMapping("/{id}")
-    public ResponseEntity<Category> getCategoryById(@PathVariable Long id) {
+    public ResponseEntity<?> getCategoryById(@PathVariable Long id) {
         try {
             Category category = categoryService.getCategoryById(id);
             return ResponseEntity.ok(category);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 
@@ -47,36 +47,36 @@ public class CategoryController {
 
     // Update an existing category
     @PutMapping("/update/{id}")
-    public ResponseEntity<Category> updateCategory(@PathVariable Long id, @RequestBody Category category) {
+    public ResponseEntity<?> updateCategory(@PathVariable Long id, @RequestBody Category category) {
         try {
             Category updatedCategory = categoryService.updateCategory(id, category);
             return ResponseEntity.ok(updatedCategory);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 
     // Delete a category
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<String> deleteCategory(@PathVariable Long id) {
+    public ResponseEntity<?> deleteCategory(@PathVariable Long id) {
         try {
             categoryService.deleteCategory(id);
             return ResponseEntity.ok("Category deleted successfully.");
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Category not found.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 
-    /*
     // Search categories by name
     @GetMapping("/search")
     public ResponseEntity<List<Category>> searchCategories(@RequestParam String name) {
         List<Category> categories = categoryService.searchByName(name);
         return ResponseEntity.ok(categories);
     }
-         Get all categories (with pagination)
-     
-    @GetMapping("/getAll")
+
+    // (Optional) Get all categories with pagination — uncomment if using paged view
+    /*
+    @GetMapping("/getAllPaged")
     public ResponseEntity<Page<Category>> getAllCategories(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -85,6 +85,5 @@ public class CategoryController {
         Page<Category> categoryPage = categoryService.getAllCategories(pageable);
         return ResponseEntity.ok(categoryPage);
     }
-
     */
 }

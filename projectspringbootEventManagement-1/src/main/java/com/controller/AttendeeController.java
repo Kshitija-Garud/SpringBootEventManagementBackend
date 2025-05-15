@@ -10,7 +10,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
-import com.exceptiondemo.GlobalExceptionhandler;
 
 import com.model.Attendee;
 import com.model.AttendeeEventInfoDTO;
@@ -25,68 +24,61 @@ public class AttendeeController {
     @Autowired
     private AttendeeService attendeeService;
 
-    @GetMapping("/getAll")
 
+    // Get all attendees (non-paginated)
+    @GetMapping("/getAll")
     public ResponseEntity<List<Attendee>> getAllAttendees() {
-    	List<Attendee> AttendeeList=attendeeService.getAllAttendees();
-		return ResponseEntity.ok(AttendeeList);
-    		
-    		}
-    
+        List<Attendee> attendeeList = attendeeService.getAllAttendees();
+        return ResponseEntity.ok(attendeeList);
+    }
+
+    // Get attendee by ID
     @GetMapping("/{id}")
-    public ResponseEntity<Attendee> getAttendeeById(@PathVariable Long id) {
+    public ResponseEntity<?> getAttendeeById(@PathVariable Long id) {
         try {
             Attendee attendee = attendeeService.getAttendeeById(id);
             return ResponseEntity.ok(attendee);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 
+    // Add attendee to an event
     @PostMapping("/add/{eventId}")
-    public ResponseEntity<AttendeeEventInfoDTO> addAttendeeToEvent(@PathVariable Long eventId, @RequestBody Attendee attendee) {
+    public ResponseEntity<?> addAttendeeToEvent(@PathVariable Long eventId, @RequestBody Attendee attendee) {
         try {
             AttendeeEventInfoDTO dto = attendeeService.createAttendee(eventId, attendee);
             return ResponseEntity.status(HttpStatus.CREATED)
                                  .header("info", "Attendee added to event successfully")
                                  .body(dto);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                                 .body(null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
-    
-    
 
- //Update attendee details
+    // Update attendee details
     @PutMapping("/update/{id}")
-    public ResponseEntity<Attendee> updateAttendee(
-            @PathVariable Long id,
-            @RequestBody Attendee updatedAttendee) {
-
+    public ResponseEntity<?> updateAttendee(@PathVariable Long id, @RequestBody Attendee updatedAttendee) {
         try {
             Attendee updated = attendeeService.updateAttendee(id, updatedAttendee);
             return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
-    
-    // Delete attendee by ID
 
+    // Delete attendee by ID
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> deleteAttendee(@PathVariable Long id) {
         try {
             attendeeService.deleteAttendee(id);
             return ResponseEntity.ok("Attendee deleted successfully.");
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Attendee not found.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 
-    /*
-
-    // Search by name (paginated)
+    // Search attendees by name (paginated)
     @GetMapping("/search/name")
     public ResponseEntity<Page<Attendee>> searchByName(
             @RequestParam String name,
@@ -98,7 +90,7 @@ public class AttendeeController {
         return ResponseEntity.ok(result);
     }
 
-    //Search by email (paginated)
+    // Search attendees by email (paginated)
     @GetMapping("/search/email")
     public ResponseEntity<Page<Attendee>> searchByEmail(
             @RequestParam String email,
@@ -110,23 +102,15 @@ public class AttendeeController {
         return ResponseEntity.ok(result);
     }
 
-    //Filter by eventId (paginated)
-    @GetMapping("/filter")
-    public ResponseEntity<Page<Attendee>> filterByEventId(
-            @RequestParam Long eventId,
+    @GetMapping("/search/eventtitle")
+    public ResponseEntity<Page<Attendee>> getAttendeesByEventTitle(
+            @RequestParam String title,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<Attendee> result = attendeeService.filterByEventId(eventId, pageable);
+        Page<Attendee> result = attendeeService.filterByEventTitle(title, pageable);
         return ResponseEntity.ok(result);
     }
-    */
-  
 
 }
-
-
-
-
-

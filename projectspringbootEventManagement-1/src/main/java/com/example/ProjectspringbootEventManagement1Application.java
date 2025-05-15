@@ -7,7 +7,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
-@ComponentScan({"com.example","com.controller","com.dao","com.model","com.service","com.exceptiondemo"})
+@ComponentScan({"com.examplhttp://localhost:8080/events/by-date?date=2025-06-15&page=0&size=5e","com.controller","com.dao","com.model","com.service","com.exceptiondemo"})
 @EntityScan("com.model")
 @EnableJpaRepositories(basePackages="com.dao")
 public class ProjectspringbootEventManagement1Application {

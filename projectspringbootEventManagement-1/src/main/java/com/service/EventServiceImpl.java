@@ -1,5 +1,7 @@
 package com.service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +12,9 @@ import org.springframework.stereotype.Service;
 import com.dao.CategoryRepository;
 import com.dao.EventRepository;
 import com.dao.VenueRepository;
-import com.exceptiondemo.GlobalExceptionhandler;
+import com.exceptiondemo.CategoryNotFoundException;
+import com.exceptiondemo.EventNotFoundException;
+import com.exceptiondemo.VenueNotFoundException;
 import com.model.Category;
 import com.model.Event;
 import com.model.Venue;
@@ -25,24 +29,7 @@ public class EventServiceImpl  implements EventService{
 	@Autowired
 	private VenueRepository venueRepo;
 
-	/*
-	 @Override
-	    public Page<Event> getEventsPaginated(Pageable pageable) {
-	        return eventRepo.findAll(pageable);
-	    }
-	 
-	 
-	 @Override
-	    public Page<Event> getEventsByCategory(Long categoryId, Pageable pageable) {
-	        return eventRepo.findByCategoryId(categoryId, pageable);
-	    }
-
-	 
-	 @Override
-	    public Page<Event> searchEventsByTitle(String keyword, Pageable pageable) {
-	        return eventRepo.findByTitleContainingIgnoreCase(keyword, pageable);
-	    }
-*/
+	
 	 
 	@Override
 	public List<Event> getAllEvents() {
@@ -51,16 +38,18 @@ public class EventServiceImpl  implements EventService{
 
 	@Override
 	public Event getEventById(Long id) {
-	    return eventRepo.findById(id).orElseThrow(() -> new RuntimeException("Event with ID " + id + " not found"));
+	    return eventRepo.findById(id).orElseThrow(() -> new EventNotFoundException("Event with ID " + id + " not found"));
 	}
 
 	@Override
 	public Event createEvent(Event event) {
 		 // Fetch the full Venue and Category from DB
 		Venue venue = venueRepo.findById(event.getVenue().getId())
-                .orElseThrow(() -> new RuntimeException("Venue not found"));
+		                .orElseThrow(() -> new VenueNotFoundException("Venue not found"));
+		
 Category category = categoryRepo.findById(event.getCategory().getId())
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() -> new CategoryNotFoundException("Category not found"));
+
 // Set the fetched Venue and Category to the Event
 event.setVenue(venue);
 event.setCategory(category);
@@ -72,7 +61,7 @@ return eventRepo.save(event);
 	@Override
 	public Event updateEvent(Long id, Event eventDetails) {
 		 Event existing = eventRepo.findById(id)
-	                .orElseThrow(() -> new RuntimeException("Event with ID " + id + " not found"));
+	                .orElseThrow(() -> new EventNotFoundException("Event with ID " + id + " not found"));
 
 	        // Update the fields
 	        existing.setTitle(eventDetails.getTitle());
@@ -80,6 +69,8 @@ return eventRepo.save(event);
 	        existing.setDateTime(eventDetails.getDateTime());
 	        existing.setVenue(eventDetails.getVenue());
 	        existing.setCategory(eventDetails.getCategory());
+	        existing.setImageData(eventDetails.getImageData()); 
+	        existing.setLastRegistrationDate(eventDetails.getLastRegistrationDate()); 
 
 	        return eventRepo.save(existing);
 	}
@@ -87,8 +78,30 @@ return eventRepo.save(event);
 	@Override
 	public void deleteEvent(Long id) {
 		 Event existing = eventRepo.findById(id)
-	                .orElseThrow(() -> new RuntimeException("Event with ID " + id + " not found"));
+	                .orElseThrow(() -> new EventNotFoundException("Event with ID " + id + " not found"));
 	        eventRepo.delete(existing);
 	}
+	
+	 // Search events by title with pagination
+    @Override
+    public Page<Event> searchEventsByTitle(String keyword, Pageable pageable) {
+        return eventRepo.findByTitleContainingIgnoreCase(keyword, pageable);
+    }
+
+    @Override
+    public Page<Event> filterByCategoryName(String categoryName, Pageable pageable) {
+        return eventRepo.findByCategory_NameContainingIgnoreCase(categoryName, pageable);
+    }
+
+    @Override
+    public Page<Event> filterByVenueName(String venueName, Pageable pageable) {
+        return eventRepo.findByVenue_NameContainingIgnoreCase(venueName, pageable);
+    }
+   
+    @Override
+    public Page<Event> findByDateTimeBetween(LocalDateTime startOfDay, LocalDateTime endOfDay, Pageable pageable) {
+        return eventRepo.findByDateTimeBetween(startOfDay, endOfDay, pageable);
+    }
+
 
 }

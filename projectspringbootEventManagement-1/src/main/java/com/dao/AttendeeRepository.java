@@ -8,11 +8,11 @@ import com.model.Attendee;
 
 public interface AttendeeRepository extends JpaRepository<Attendee, Long> {
 
-	/*
+	
 	 Page<Attendee> findByNameContainingIgnoreCase(String name, Pageable pageable);
-
+	
 	    Page<Attendee> findByEmailContainingIgnoreCase(String email, Pageable pageable);
-
-	    Page<Attendee> findByEventId(Long eventId, Pageable pageable);
-	    */
+	    
+	    Page<Attendee> findByEvent_TitleContainingIgnoreCase(String title, Pageable pageable);
+	    
 }

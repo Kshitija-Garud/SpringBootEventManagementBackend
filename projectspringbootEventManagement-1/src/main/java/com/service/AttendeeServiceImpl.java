@@ -12,8 +12,8 @@ import org.springframework.stereotype.Service;
 
 import com.dao.AttendeeRepository;
 import com.dao.EventRepository;
-import com.exceptiondemo.GlobalExceptionhandler;
-
+import com.exceptiondemo.AttendeeNotFoundException;
+import com.exceptiondemo.EventNotFoundException;
 import com.model.Attendee;
 import com.model.AttendeeEventInfoDTO;
 import com.model.Event;
@@ -33,7 +33,7 @@ public class AttendeeServiceImpl implements AttendeeService{
 	}
 	@Override
 	public Attendee getAttendeeById(Long id) {
-		return attendeeRepo.findById(id).orElseThrow(() -> new  RuntimeException("Attendee with ID " + id + " not found"));
+		return attendeeRepo.findById(id).orElseThrow(() -> new  AttendeeNotFoundException("Attendee with ID " + id + " not found"));
 	}
 
 	
@@ -43,7 +43,7 @@ public class AttendeeServiceImpl implements AttendeeService{
 		// TODO Auto-generated method stub
 		
 		 // Find the event by ID or throw an exception if not found
-		 Event event = eventRepo.findById(eventId).orElseThrow(() -> new RuntimeException("Event with ID " + eventId + " not found"));
+		 Event event = eventRepo.findById(eventId).orElseThrow(() -> new EventNotFoundException("Event with ID " + eventId + " not found"));
 		 
 		 // Set the event inside the attendee before saving
 		 attendee.setEvent(event);
@@ -52,8 +52,9 @@ public class AttendeeServiceImpl implements AttendeeService{
 		 Attendee saved = attendeeRepo.save(attendee);
 	     
 		 // Format the event date as a String
-		 String formattedDate = event.getDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-	        
+		    String formattedEventDate = event.getDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+		    String formattedRegDate = event.getLastRegistrationDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+
 		// Return the custom DTO with combined attendee and event info
 		 return new AttendeeEventInfoDTO(
 	                saved.getId(),               // Attendee ID
@@ -61,7 +62,9 @@ public class AttendeeServiceImpl implements AttendeeService{
 	                saved.getEmail(),            // Attendee email
 	                event.getId(),               // Event ID
 	                event.getTitle(),            // Event title
-	                formattedDate                // Event date as string
+	                formattedEventDate,			 //Event Date
+	                event.getImageData(),        //Event Image
+	                formattedRegDate               // Event last Regdate as string
 	                );
 	}
 
@@ -70,7 +73,7 @@ public class AttendeeServiceImpl implements AttendeeService{
 	@Override
     public Attendee updateAttendee(Long id, Attendee updated) {
         Attendee attendee = attendeeRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Attendee with ID " + id + " not found"));
+                .orElseThrow(() -> new AttendeeNotFoundException("Attendee with ID " + id + " not found"));
 
         attendee.setName(updated.getName());
         attendee.setEmail(updated.getEmail());
@@ -80,26 +83,25 @@ public class AttendeeServiceImpl implements AttendeeService{
 	
 	@Override
 	public void deleteAttendee(Long id) {
-		// TODO Auto-generated method stub
-		  attendeeRepo.deleteById(id);
-		
+	    Attendee attendee = attendeeRepo.findById(id)
+	        .orElseThrow(() -> new AttendeeNotFoundException("Attendee with ID " + id + " not found"));
+
+	    attendeeRepo.delete(attendee);
 	}
 
-	/*
+
 	 @Override
 	    public Page<Attendee> searchByName(String name, Pageable pageable) {
 	        return attendeeRepo.findByNameContainingIgnoreCase(name, pageable);
 	    }
-
+	
 	    @Override
 	    public Page<Attendee> searchByEmail(String email, Pageable pageable) {
 	        return attendeeRepo.findByEmailContainingIgnoreCase(email, pageable);
 	    }
-
+		
 	    @Override
-	    public Page<Attendee> filterByEventId(Long eventId, Pageable pageable) {
-	        return attendeeRepo.findByEventId(eventId, pageable);
+	    public Page<Attendee> filterByEventTitle(String title, Pageable pageable) {
+	        return attendeeRepo.findByEvent_TitleContainingIgnoreCase(title, pageable);
 	    }
-*/
-	
 }

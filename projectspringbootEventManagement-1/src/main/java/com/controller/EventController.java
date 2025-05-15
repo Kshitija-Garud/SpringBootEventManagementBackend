@@ -1,15 +1,29 @@
 package com.controller;
 
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import com.exceptiondemo.GlobalExceptionhandler;
+import com.exceptiondemo.CategoryNotFoundException;
+import com.exceptiondemo.EventNotFoundException;
+import com.exceptiondemo.VenueNotFoundException;
+import com.model.Category;
 import com.model.Event;
+import com.model.Venue;
+import com.service.CategoryService;
 import com.service.EventService;
+import com.service.VenueService;
 
 @RestController
 @RequestMapping("events")
@@ -20,6 +34,12 @@ public class EventController {
 	
 	 @Autowired
 	    private EventService eventService;
+	 
+	  @Autowired
+	    private VenueService venueService;
+
+	    @Autowired
+	    private CategoryService categoryService;
 
 	    //Get all events
 	 @GetMapping("/getAll")
@@ -31,100 +51,201 @@ public class EventController {
 	            throw new RuntimeException("Internal Server Error"); // Simulate 500
 	        }
 	    }
-/*
-	    //  Get paginated list of events
-	    @GetMapping("/paginated")
-	    public ResponseEntity<Page<Event>> getPaginatedEvents(
-	            @RequestParam(defaultValue = "0") int page,           // page number
-	            @RequestParam(defaultValue = "5") int size,           // events per page
-	            @RequestParam(defaultValue = "id") String sortBy      // sorting field
-	    ) {
-	    	// Creating a Pageable object with page number, size, and sorting field
-	        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
-	        
-	        // Fetching the events with pagination
-	        Page<Event> eventPage = eventService.getEventsPaginated(pageable);
-	        
-	     // Returning the paginated events as a response
-	        return ResponseEntity.ok(eventPage);
-	    }
+	 
+	// Get event by ID
+		 @GetMapping("/id/{id}")
+		    public ResponseEntity<?> getEventById(@PathVariable Long id) {
+		        try {
+		            Event event = eventService.getEventById(id);
+		            return ResponseEntity.ok(event);
+		        } catch (Exception e) {
+		        	return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());		        }
+		    }
+		
+		    //Create a new event
+		 @PostMapping("/create")
+		 public ResponseEntity<?> createEvent(
+		         @RequestParam("title") String title,
+		         @RequestParam("dateTime") String dateTimeStr,
+		         @RequestParam("lastRegistrationDate") String lastRegiStr,
+		         @RequestParam("venueId") Long venueId,
+		         @RequestParam("categoryId") Long categoryId,
+		         @RequestParam(value = "image", required = false) MultipartFile imageFile) {
 
-	    // Search events by title (case-insensitive)
-	    @GetMapping("/search")
-	    public ResponseEntity<Page<Event>> searchEvents(
-	            @RequestParam String keyword,					// Keyword to search in event title
-	            @RequestParam(defaultValue = "0") int page,		// Page number
-	            @RequestParam(defaultValue = "5") int size		// Number of records per page
-	    ) {
-	    	
-	    	 // Creating a Pageable object with page number and size
-	        Pageable pageable = PageRequest.of(page, size);
-	        
-	        // Searching events with a case-insensitive title match
-	        Page<Event> results = eventService.searchEventsByTitle(keyword, pageable);
-	        
-	     // Returning the search results
-	        return ResponseEntity.ok(results);
-	    }
+			 
+			        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+			        LocalDateTime dateTime;
+			        LocalDateTime lastRegistrationDate;
 
-	    // Filter events by category ID
-	    @GetMapping("/filter")
-	    public ResponseEntity<Page<Event>> filterByCategory(
-	            @RequestParam Long categoryId,					// Category ID to filter events by
-	            @RequestParam(defaultValue = "0") int page,		// Page number
-	            @RequestParam(defaultValue = "5") int size		// Number of records per page
+			        // Parse dateTime safely
+			        try {
+			            dateTime = LocalDateTime.parse(dateTimeStr, formatter);
+			        } catch (DateTimeParseException e) {
+			            return ResponseEntity.badRequest().body("Invalid format for 'dateTime'. Expected format: yyyy-MM-dd'T'HH:mm");
+			        }
 
-	    ) {
-	    	
-	        // Creating a Pageable object for pagination
-	        Pageable pageable = PageRequest.of(page, size);
-	        
-	        // Filtering events by category ID
-	        Page<Event> filteredEvents = eventService.getEventsByCategory(categoryId, pageable);
-	        
-	     // Returning the filtered events
-	        return ResponseEntity.ok(filteredEvents);
-	    }
-*/
-	    // Get event by ID
-	 @GetMapping("/{id}")
-	    public ResponseEntity<Event> getEventById(@PathVariable Long id) {
-	        try {
-	            Event event = eventService.getEventById(id);
-	            return ResponseEntity.ok(event);
-	        } catch (Exception e) {
-	            throw new RuntimeException("Internal Server Error"); // Simulate 500
-	        }
-	    }
+			        // Parse lastRegistrationDate safely
+			        try {
+			            lastRegistrationDate = LocalDateTime.parse(lastRegiStr, formatter);
+			        } catch (DateTimeParseException e) {
+			            return ResponseEntity.badRequest().body("Invalid format for 'lastRegistrationDate'. Expected format: yyyy-MM-dd'T'HH:mm");
+			        }
+			 
 
-	    //Create a new event
-	    @PostMapping("/create")
-	    public ResponseEntity<Event> createEvent(@RequestBody Event event) {
-	        Event created = eventService.createEvent(event); // Create event
-	        return ResponseEntity.status(HttpStatus.CREATED) // Send HTTP 201 status
-	                             .header("info", "Event created successfully")
-	                             .body(created); // Return the created event as the response
-	    }
+		     try {
+		         Event event = new Event();
+		         event.setTitle(title);
+		         event.setDateTime(dateTime);
+		         event.setLastRegistrationDate(lastRegistrationDate);
 
-	    // Update existing event by ID
-	    @PutMapping("/update/{id}")
-	    public ResponseEntity<Event> updateEvent(@PathVariable Long id, @RequestBody Event eventDetails) {
-	        try {
-	            Event updated = eventService.updateEvent(id, eventDetails);
-	            return ResponseEntity.ok(updated);
-	        } catch (Exception e) {
-	            throw new RuntimeException("Internal Server Error"); // Simulate 500
-	        }
-	    }
+		         
+		         Venue venue = new Venue();
+		         venue.setId(venueId);
+		         event.setVenue(venue);
 
-	    // Delete event by ID
-	    @DeleteMapping("/delete/{id}")
-	    public ResponseEntity<String> deleteEvent(@PathVariable Long id) {
-	        try {
-	            eventService.deleteEvent(id);
-	            return ResponseEntity.ok("Event deleted successfully.");
-	        } catch (Exception e) {
-	            throw new RuntimeException("Internal Server Error"); // Simulate 500
-	        }
-	    } 
+		         Category category = new Category();
+		         category.setId(categoryId);
+		         event.setCategory(category);
+
+		         if (imageFile != null && !imageFile.isEmpty()) {
+		             event.setImageData(imageFile.getBytes());
+		             System.out.println("Image size: " + imageFile.getSize());
+		         } else {
+		             System.out.println("No image file received");
+		         }
+
+		         Event created = eventService.createEvent(event);
+		         return ResponseEntity.status(HttpStatus.CREATED)
+		                 .header("info", "Event created successfully")
+		                 .body(created);
+
+		     } catch (VenueNotFoundException e ) {
+		            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+		        }catch (CategoryNotFoundException e ) {
+		            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+		        } catch (Exception e) {
+		            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+		        }
+			 
+		 }
+
+		 @PutMapping("/update/{id}")
+		 public ResponseEntity<?> updateEvent(@PathVariable Long id,  
+		          @RequestParam("title") String title,
+		          @RequestParam("dateTime") String dateTimeStr,
+		          @RequestParam("lastRegistrationDate") String lastRegStr,
+		          @RequestParam("venueId") Long venueId,
+		          @RequestParam("categoryId") Long categoryId,
+		          @RequestParam(value = "image", required = false) MultipartFile imageFile) {
+		     try {
+		         // Fetch the existing event by ID
+		         Event existingEvent = eventService.getEventById(id); // Directly get the event (no need for Optional)
+
+		         
+		      
+		         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+		         LocalDateTime dateTime;
+		         LocalDateTime lastRegistrationDate;
+
+		         // Parse dateTime
+		         try {
+		             dateTime = LocalDateTime.parse(dateTimeStr, formatter);
+		         } catch (DateTimeParseException e) {
+		             return ResponseEntity.badRequest().body("Invalid format for 'dateTime'. Expected format: yyyy-MM-dd'T'HH:mm");
+		         }
+
+		         // Parse lastRegistrationDate
+		         try {
+		             lastRegistrationDate = LocalDateTime.parse(lastRegStr, formatter);
+		         } catch (DateTimeParseException e) {
+		             return ResponseEntity.badRequest().body("Invalid format for 'lastRegistrationDate'. Expected format: yyyy-MM-dd'T'HH:mm");
+		         } 
+		         // Update fields
+		         existingEvent.setTitle(title);
+		         existingEvent.setDateTime(dateTime);
+		         existingEvent.setLastRegistrationDate(lastRegistrationDate);
+
+		         // Update venue and category
+		         Venue venue = new Venue();
+		         venue.setId(venueId);
+		         existingEvent.setVenue(venue);
+
+		         Category category = new Category();
+		         category.setId(categoryId);
+		         existingEvent.setCategory(category);
+
+		         // Handle image update if a new image is provided
+		         if (imageFile != null && !imageFile.isEmpty()) {
+		             existingEvent.setImageData(imageFile.getBytes());
+		             System.out.println("Updated Image size: " + imageFile.getSize());
+		         }
+
+		         // Save the updated event
+		         Event updatedEvent = eventService.updateEvent(id, existingEvent);
+
+		         // Return the updated event as a response
+		         return ResponseEntity.ok(updatedEvent);
+
+		     } catch (VenueNotFoundException | CategoryNotFoundException e) {
+		         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+		     } catch (EventNotFoundException e) {
+		         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Event not found");
+		     } catch (Exception e) {
+		         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error: " + e.getMessage());
+		     }
+		 }
+
+
+		    // Delete event by ID
+		    @DeleteMapping("/delete/{id}")
+		    public ResponseEntity<String> deleteEvent(@PathVariable Long id) {
+		        try {
+		            eventService.deleteEvent(id);
+		            return ResponseEntity.ok("Event deleted successfully.");
+		        } catch (EventNotFoundException e) {
+			         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Event not found");
+			     } 
+		    } 
+
+		    
+		    // Search events by title with pagination
+		    @GetMapping("/search/title")
+		    public ResponseEntity<Page<Event>> searchEventsByTitle(@RequestParam("keyword") String keyword,
+		                                                            @RequestParam("page") int page,
+		                                                            @RequestParam("size") int size) {
+		        Pageable pageable = PageRequest.of(page, size);
+		        Page<Event> eventPage = eventService.searchEventsByTitle(keyword, pageable);
+		        return ResponseEntity.ok(eventPage);
+		    }
+		    
+		    
+		    @GetMapping("/filter/category")
+		    public ResponseEntity<Page<Event>> filterEventsByCategory(@RequestParam("categoryName") String categoryName,
+		                                                               @RequestParam("page") int page,
+		                                                               @RequestParam("size") int size) {
+		        Pageable pageable = PageRequest.of(page, size);
+		        Page<Event> eventPage = eventService.filterByCategoryName(categoryName, pageable);
+		        return ResponseEntity.ok(eventPage);
+		    }
+
+
+		    @GetMapping("/filter/venueByName")
+		    public ResponseEntity<Page<Event>> filterEventsByVenueName(@RequestParam("venueName") String venueName,
+		                                                               @RequestParam("page") int page,
+		                                                               @RequestParam("size") int size) {
+		        Pageable pageable = PageRequest.of(page, size);
+		        Page<Event> eventPage = eventService.filterByVenueName(venueName, pageable);
+		        return ResponseEntity.ok(eventPage);
+		    }
+
+
+		    @GetMapping("/searchbydate")
+		    public Page<Event> getEventsByDate(@RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+		                                       Pageable pageable) {
+		        LocalDateTime startOfDay = date.atStartOfDay();
+		        LocalDateTime endOfDay = startOfDay.plusDays(1);
+		        return eventService.findByDateTimeBetween(startOfDay, endOfDay, pageable);
+		    }
+
+		    
 }

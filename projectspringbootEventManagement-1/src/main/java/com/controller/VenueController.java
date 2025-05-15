@@ -9,9 +9,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
+import com.exceptiondemo.VenueNotFoundException;
 import com.model.Venue;
 import com.service.VenueService;
-import com.exceptiondemo.GlobalExceptionhandler;
 @RestController
 @RequestMapping("venues")
 @CrossOrigin(origins = "http://localhost:3000") 
@@ -40,31 +40,16 @@ public class VenueController {
 */
     // Get venue by ID
     @GetMapping("/{id}")
-    public ResponseEntity<Venue> getVenueById(@PathVariable Long id) {
-        return venueService.getVenueById(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    public ResponseEntity<?> getVenueById(@PathVariable Long id) {
+        try {
+            Venue venue = venueService.getVenueById(id)
+                                      .orElseThrow(() -> new VenueNotFoundException("Venue with ID " + id + " not found"));
+            return ResponseEntity.ok(venue);
+        } catch (VenueNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
-
-    /*
-    // Search venues by name (case-insensitive)
-    @GetMapping("/search/name")
-    public ResponseEntity<List<Venue>> searchByName(@RequestParam String name) {
-        List<Venue> venues = venueService.searchByName(name);
-        return venues.isEmpty() 
-            ? ResponseEntity.status(HttpStatus.NO_CONTENT).build()
-            : ResponseEntity.ok(venues);
-    }
-
-    // Filter venues by location (case-insensitive)
-    @GetMapping("/filter")
-    public ResponseEntity<List<Venue>> filterByLocation(@RequestParam String location) {
-        List<Venue> venues = venueService.filterByLocation(location);
-        return venues.isEmpty() 
-            ? ResponseEntity.status(HttpStatus.NO_CONTENT).build()
-            : ResponseEntity.ok(venues);
-    }
-*/
+    
     // Add a new venue
     @PostMapping("/add")
     public ResponseEntity<Venue> addVenue(@RequestBody Venue venue) {
@@ -74,12 +59,12 @@ public class VenueController {
 
     // Update a venue by ID
     @PutMapping("/update/{id}")
-    public ResponseEntity<Venue> updateVenue(@PathVariable Long id, @RequestBody Venue venueDetails) {
+    public ResponseEntity<?> updateVenue(@PathVariable Long id, @RequestBody Venue venueDetails) {
         try {
             Venue updatedVenue = venueService.updateVenue(id, venueDetails);
             return ResponseEntity.ok(updatedVenue);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (VenueNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 
@@ -89,9 +74,29 @@ public class VenueController {
         try {
             venueService.deleteVenue(id);
             return ResponseEntity.ok("Venue deleted successfully.");
-        } catch (RuntimeException e) {
+        } catch (VenueNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                                 .body("Venue not found.");
+                                 .body(e.getMessage());
         }
     }
+    
+
+    // Search venues by name (case-insensitive)
+    @GetMapping("/search/name")
+    public ResponseEntity<List<Venue>> searchByName(@RequestParam String name) {
+        List<Venue> venues = venueService.searchByName(name);
+        return venues.isEmpty() 
+            ? ResponseEntity.status(HttpStatus.NO_CONTENT).build()
+            : ResponseEntity.ok(venues);
+    }
+    
+    // Filter venues by location (case-insensitive)
+    @GetMapping("/filter")
+    public ResponseEntity<List<Venue>> filterByLocation(@RequestParam String location) {
+        List<Venue> venues = venueService.filterByLocation(location);
+        return venues.isEmpty() 
+            ? ResponseEntity.status(HttpStatus.NO_CONTENT).build()
+            : ResponseEntity.ok(venues);
+    }
+
 }

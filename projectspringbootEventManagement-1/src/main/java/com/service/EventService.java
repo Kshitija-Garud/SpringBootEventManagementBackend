@@ -1,6 +1,7 @@
 package com.service;
 
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -13,15 +14,6 @@ public interface EventService {
 	 // Fetch all events without pagination
 	List<Event> getAllEvents(); 
 	
-	 // Fetch events using pagination
-	//Page<Event> getEventsPaginated(Pageable pageable);
-	
-	// Fetch events filtered by category ID with pagination
-	//Page<Event> getEventsByCategory(Long categoryId, Pageable pageable);
-	
-	
-	// Search events by title with pagination
-	//Page<Event> searchEventsByTitle(String keyword, Pageable pageable);
 	 
 	
     // Get a single event by its ID
@@ -36,5 +28,19 @@ public interface EventService {
 	
 	 // Delete an event by ID
 	void deleteEvent(Long id); 
+	
+	 // Search events by title with pagination
+    Page<Event> searchEventsByTitle(String keyword, Pageable pageable);
+
+    // Filter events by category name with pagination
+    Page<Event> filterByCategoryName(String categoryName, Pageable pageable);
+
+    // Filter events by venue name with pagination
+    Page<Event> filterByVenueName(String venueName, Pageable pageable);
+    
+    
+ // Find events that occur on a specific date (ignoring time)
+    Page<Event> findByDateTimeBetween(LocalDateTime startOfDay, LocalDateTime endOfDay, Pageable pageable);
+
 
 }
